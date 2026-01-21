@@ -1,0 +1,51 @@
+# nginx proxy address - http://172.17.0.1:60122
+
+name: speedtest
+x-logging: &default-logging
+  options:
+    max-size: '5m'
+    max-file: '1'
+  driver: json-file
+
+services:
+  app:
+    image: linuxserver/speedtest-tracker:latest
+    container_name: speedtest-app
+    hostname: ${BASE_HOST_NAME:-$HOSTNAME}
+    restart: always
+    pull_policy: always
+    logging: *default-logging
+    environment:
+      - 'PUID=1000'
+      - 'PGID=1000'
+      - 'DB_CONNECTION=sqlite'
+      - 'PUBLIC_DASHBOARD=true'
+      - 'APP_NAME=Speedtest Results'
+      - 'TZ=${TZ:-America/New_York}'
+      - 'SPEEDTEST_SCHEDULE=0 */4 * * *'
+      - 'DISPLAY_TIMEZONE=${TZ:-America/New_York}'
+      - 'APP_URL=https://${BASE_HOST_NAME:-$HOSTNAME}'
+      - 'ASSET_URL=https://${BASE_HOST_NAME:-$HOSTNAME}'
+      - 'ADMIN_NAME=${APP_ADMIN_NAME:-administrator}'
+      - 'ADMIN_EMAIL=${APP_ADMIN_EMAIL:-administrator@$HOSTNAME}'
+      - 'ADMIN_PASSWORD=${APP_ADMIN_PASS:-QmzwUUWm2PEni9X3A8}'
+      - 'APP_KEY=base64:2LfwzhHsLuWvt9bCSdqrRGQ7Bare5Dt0p/KWNAKNk8U='
+      - 'PRUNE_RESULTS_OLDER_THAN=0'
+      - 'SPEEDTEST_SERVERS='
+    ports:
+      - '172.17.0.1:60122:80'
+    volumes:
+      - './rootfs/config/speedtest:/config'
+    healthcheck:
+      test: curl -q -LSsf "http://127.0.0.1/api/healthcheck" | jq -r '.message' || exit 1
+      interval: 10s
+      retries: 3
+      start_period: 30s
+      timeout: 10s
+    networks:
+      - speedtest
+
+networks:
+  speedtest:
+    name: speedtest
+    external: false
