@@ -35,7 +35,7 @@ services:
     ports:
       - '172.17.0.1:60122:80'
     volumes:
-      - './rootfs/config/speedtest:/config'
+      - './volumes/config/speedtest:/config'
     healthcheck:
       test: curl -q -LSsf "http://127.0.0.1/api/healthcheck" | jq -r '.message' || exit 1
       interval: 10s
