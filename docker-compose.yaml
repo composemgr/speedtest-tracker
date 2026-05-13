@@ -20,13 +20,13 @@ services:
       PGID: ${SERVICE_GROUP:-1000}
       DB_CONNECTION: sqlite
       PUBLIC_DASHBOARD: true
-      APP_NAME: ${APP_NAME:-Speedtest Results}
+      APP_NAME: ${APP_ORG_NAME:-Speedtest Results}
       TZ: ${TZ:-America/New_York}
       SPEEDTEST_SCHEDULE: ${SPEEDTEST_SCHEDULE:-0 */4 * * *}
       DISPLAY_TIMEZONE: ${TZ:-America/New_York}
       APP_URL: https://${BASE_HOST_NAME:-$HOSTNAME}.${BASE_DOMAIN_NAME:-example.com}
       ASSET_URL: https://${BASE_HOST_NAME:-$HOSTNAME}.${BASE_DOMAIN_NAME:-example.com}
-      ADMIN_NAME: ${APP_ADMIN_NAME:-administrator}
+      ADMIN_NAME: ${APP_ADMIN_USER:-administrator}
       ADMIN_EMAIL: ${APP_ADMIN_USER:-admin@example.com}
       ADMIN_PASSWORD: ${APP_ADMIN_PASS:-changeme_admin_password}
       APP_KEY: ${APP_SECRET_KEY:-changeme_secret_key_min_32_chars}
