@@ -1,0 +1,66 @@
+# nginx proxy address - http://172.17.0.1:64351
+
+name: speedtest-tracker
+x-logging: &default-logging
+  options:
+    max-size: '5m'
+    max-file: '1'
+  driver: json-file
+
+services:
+  app:
+    image: lscr.io/linuxserver/speedtest-tracker:latest
+    container_name: speedtest-tracker-app
+    domainname: ${BASE_DOMAIN_NAME:-example.com}
+    hostname: ${BASE_HOST_NAME:-$HOSTNAME}
+    restart: always
+    pull_policy: always
+    logging: *default-logging
+    environment:
+      TZ: ${TZ:-America/New_York}
+      CONTAINER_NAME: speedtest-tracker-app
+      HOSTNAME: ${BASE_HOST_NAME:-$HOSTNAME}
+      PUID: ${SERVICE_USER:-1000}
+      PGID: ${SERVICE_GROUP:-1000}
+      APP_NAME: ${APP_ORG_NAME:-Speedtest Tracker}
+      APP_KEY: ${APP_SECRET_KEY:-replace-with-a-random-32-byte-hex-string}
+      APP_URL: ${APP_PUBLIC_URL:-https://localhost}
+      ADMIN_NAME: ${APP_ADMIN_NAME:-Admin}
+      ADMIN_EMAIL: ${APP_ADMIN_EMAIL:-admin@example.com}
+      ADMIN_PASSWORD: ${APP_ADMIN_PASS:-password}
+      DB_CONNECTION: sqlite
+      DISPLAY_TIMEZONE: ${TZ:-America/New_York}
+      PUBLIC_DASHBOARD: ${PUBLIC_DASHBOARD:-true}
+      SPEEDTEST_SCHEDULE: ${SPEEDTEST_SCHEDULE:-0 */4 * * *}
+      SPEEDTEST_SERVERS: ${SPEEDTEST_SERVERS:-}
+      PRUNE_RESULTS_OLDER_THAN: ${PRUNE_RESULTS_OLDER_THAN:-0}
+    volumes:
+      - './volumes/config/speedtest-tracker:/config:z'
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -q -LSsf "http://127.0.0.1/api/healthcheck" | grep -q "ok" || exit 1']
+      interval: 10s
+      retries: 3
+      start_period: 30s
+      timeout: 10s
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.docker.network=traefik'
+      - 'traefik.http.routers.speedtest-tracker-app.entrypoints=http'
+      - 'traefik.http.routers.speedtest-tracker-app.rule=Host(`${BASE_HOST_NAME:-$HOSTNAME}`)'
+      - 'traefik.http.routers.speedtest-tracker-app.middlewares=speedtest-tracker-app-https-redirect'
+      - 'traefik.http.middlewares.speedtest-tracker-app-https-redirect.redirectscheme.scheme=https'
+      - 'traefik.http.routers.speedtest-tracker-app-secure.entrypoints=https'
+      - 'traefik.http.routers.speedtest-tracker-app-secure.rule=Host(`${BASE_HOST_NAME:-$HOSTNAME}`)'
+      - 'traefik.http.routers.speedtest-tracker-app-secure.tls.certresolver=cloudflare'
+      - 'traefik.http.routers.speedtest-tracker-app-secure.service=speedtest-tracker-app'
+      - 'traefik.http.services.speedtest-tracker-app.loadbalancer.server.port=80'
+    networks:
+      - speedtest-tracker
+      - traefik
+
+networks:
+  speedtest-tracker:
+    name: speedtest-tracker
+    external: false
+  traefik:
+    external: true
